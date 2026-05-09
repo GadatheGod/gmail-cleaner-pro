@@ -34,9 +34,9 @@ class FiltersModel(BaseModel):
         description="Filter emails from specific sender (email address or domain)",
     )
     label: Optional[str] = Field(default=None, description="Gmail label filter")
-    has_attachment: Optional[bool] = None
-    inbox_only: Optional[bool] = None
-    include_spam_trash: Optional[bool] = None
+    has_attachment: Optional[str] = Field(default=None, description="'has' or 'no-attachment'")
+    inbox_only: Optional[str] = Field(default=None, description="'inbox' to filter inbox only")
+    include_spam_trash: Optional[str] = Field(default=None, description="'spam_trash' to include spam and trash")
 
     @field_validator("older_than")
     @classmethod
