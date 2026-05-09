@@ -87,7 +87,7 @@ def scan_senders_for_delete(limit: int = 1000, filters: Optional[dict] = None):
             }
         )
         processed = 0
-        batch_size = 1000
+        batch_size = 100
 
         def process_message(request_id, response, exception) -> None:
             nonlocal processed
