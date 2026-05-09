@@ -137,15 +137,18 @@ def build_gmail_query(filters: Optional[Union[dict, Any]] = None) -> str:
     if label := filters.get("label", ""):
         query_parts.append(f"label:{label}")
 
-    if filters.get("has_attachment") is True:
+    has_attach = filters.get("has_attachment")
+    if has_attach in (True, "has"):
         query_parts.append("has:attachment")
-    elif filters.get("has_attachment") is False:
+    elif has_attach in (False, "no-attachment"):
         query_parts.append("has:no-attachment")
 
-    if filters.get("inbox_only") is True:
+    inbox = filters.get("inbox_only")
+    if inbox in (True, "inbox"):
         query_parts.append("in:inbox")
 
-    if filters.get("include_spam_trash") is True:
+    spam_trash = filters.get("include_spam_trash")
+    if spam_trash in (True, "spam_trash"):
         query_parts.append("in:spam in:trash")
 
     return " ".join(query_parts)

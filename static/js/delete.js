@@ -245,7 +245,8 @@ GmailCleaner.Delete = {
             } else {
                 btn.classList.remove('btn-deleting');
                 btn.innerHTML = 'Error';
-                alert('Error: ' + result.message);
+                const msg = result.message && typeof result.message === 'object' ? JSON.stringify(result.message) : (result.message || 'Unknown error');
+                alert('Error: ' + msg);
                 btn.disabled = false;
                 btn.innerHTML = `Delete ${r.count}`;
             }

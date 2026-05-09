@@ -46,13 +46,38 @@ router = APIRouter(prefix="/api", tags=["Actions"])
 logger = logging.getLogger(__name__)
 
 
+def _safe_background_task(func, *args, **kwargs):
+    """Wrapper to catch background task exceptions and update state."""
+    try:
+        func(*args, **kwargs)
+    except Exception as e:
+        logger.exception("Background task failed")
+        # Mark all status states as done with error to prevent infinite polling
+        from app.core import state
+        for status_dict in [
+            state.scan_status,
+            state.mark_read_status,
+            state.delete_scan_status,
+            state.delete_bulk_status,
+            state.download_status,
+            state.label_operation_status,
+            state.archive_status,
+            state.important_status,
+            state.preview_status,
+        ]:
+            if not status_dict.get("done"):
+                status_dict["error"] = str(e) if str(e) else "Unknown error"
+                status_dict["done"] = True
+                status_dict["loading"] = False
+
+
 @router.post("/scan")
 async def api_scan(request: ScanRequest, background_tasks: BackgroundTasks):
     """Start email scan for unsubscribe links."""
     filters_dict = (
         request.filters.model_dump(exclude_none=True) if request.filters else None
     )
-    background_tasks.add_task(scan_emails, request.limit, filters_dict)
+    background_tasks.add_task(_safe_background_task, scan_emails, request.limit, filters_dict)
     return {"status": "started"}
 
 
@@ -95,7 +120,7 @@ async def api_mark_read(request: MarkReadRequest, background_tasks: BackgroundTa
     filters_dict = (
         request.filters.model_dump(exclude_none=True) if request.filters else None
     )
-    background_tasks.add_task(mark_emails_as_read, request.count, filters_dict)
+    background_tasks.add_task(_safe_background_task, mark_emails_as_read, request.count, filters_dict)
     return {"status": "started"}
 
 
@@ -107,7 +132,7 @@ async def api_delete_scan(
     filters_dict = (
         request.filters.model_dump(exclude_none=True) if request.filters else None
     )
-    background_tasks.add_task(scan_senders_for_delete, request.limit, filters_dict)
+    background_tasks.add_task(_safe_background_task, scan_senders_for_delete, request.limit, filters_dict)
     return {"status": "started"}
 
 
@@ -134,7 +159,7 @@ async def api_delete_emails_bulk(
     request: DeleteBulkRequest, background_tasks: BackgroundTasks
 ):
     """Delete emails from multiple senders (background task with progress)."""
-    background_tasks.add_task(delete_emails_bulk_background, request.senders)
+    background_tasks.add_task(_safe_background_task, delete_emails_bulk_background, request.senders)
     return {"status": "started"}
 
 
@@ -144,7 +169,7 @@ async def api_download_emails(
 ):
     """Start downloading email metadata for selected senders."""
     # Note: Empty list is allowed - service function will handle it gracefully
-    background_tasks.add_task(download_emails_background, request.senders)
+    background_tasks.add_task(_safe_background_task, download_emails_background, request.senders)
     return {"status": "started"}
 
 
@@ -198,7 +223,7 @@ async def api_apply_label(
             detail="At least one sender is required",
         )
     background_tasks.add_task(
-        apply_label_to_senders_background, request.label_id, request.senders
+        _safe_background_task, apply_label_to_senders_background, request.label_id, request.senders
     )
     return {"status": "started"}
 
@@ -219,7 +244,7 @@ async def api_remove_label(
             detail="At least one sender is required",
         )
     background_tasks.add_task(
-        remove_label_from_senders_background, request.label_id, request.senders
+        _safe_background_task, remove_label_from_senders_background, request.label_id, request.senders
     )
     return {"status": "started"}
 
@@ -232,7 +257,7 @@ async def api_archive(request: ArchiveRequest, background_tasks: BackgroundTasks
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="At least one sender is required",
         )
-    background_tasks.add_task(archive_emails_background, request.senders)
+    background_tasks.add_task(_safe_background_task, archive_emails_background, request.senders)
     return {"status": "started"}
 
 
@@ -247,7 +272,7 @@ async def api_mark_important(
             detail="At least one sender is required",
         )
     background_tasks.add_task(
-        partial(mark_important_background, request.senders, important=request.important)
+        _safe_background_task, mark_important_background, request.senders, request.important
     )
     return {"status": "started"}
 
@@ -255,7 +280,7 @@ async def api_mark_important(
 @router.post("/preview-emails")
 async def api_preview_emails(request: PreviewEmailsRequest, background_tasks: BackgroundTasks):
     """Preview emails from a sender before deleting."""
-    background_tasks.add_task(preview_emails_background, request.sender, request.limit)
+    background_tasks.add_task(_safe_background_task, preview_emails_background, request.sender, request.limit)
     return {"status": "started"}
 
 
