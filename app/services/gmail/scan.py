@@ -91,7 +91,7 @@ def scan_emails(limit: int = 500, filters: Optional[dict] = None):
             }
         )
         processed = 0
-        batch_size = 100
+        batch_size = 1000
 
         def process_message(request_id, response, exception) -> None:
             nonlocal processed
@@ -193,9 +193,9 @@ def scan_emails(limit: int = 500, filters: Optional[dict] = None):
                 f"Scanned {processed}/{total} emails ({len(unsubscribe_data)} found)"
             )
 
-            # Rate limiting - small delay every 5 batches (500 emails)
-            if (i // batch_size + 1) % 5 == 0:
-                time.sleep(0.3)
+            # Rate limiting - small delay every 10 batches (10k emails) to avoid API overload
+            if (i // batch_size + 1) % 10 == 0:
+                time.sleep(0.1)
 
         # Sort by count and format results
         sorted_results = sorted(

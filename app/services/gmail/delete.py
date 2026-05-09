@@ -87,7 +87,7 @@ def scan_senders_for_delete(limit: int = 1000, filters: Optional[dict] = None):
             }
         )
         processed = 0
-        batch_size = 100
+        batch_size = 1000
 
         def process_message(request_id, response, exception) -> None:
             nonlocal processed
@@ -147,9 +147,9 @@ def scan_senders_for_delete(limit: int = 1000, filters: Optional[dict] = None):
             state.delete_scan_status["progress"] = progress
             state.delete_scan_status["message"] = f"Scanned {processed}/{total} emails"
 
-            # Rate limiting
-            if (i // batch_size + 1) % 5 == 0:
-                time.sleep(0.3)
+            # Rate limiting - small delay every 10 batches (10k emails) to avoid API overload
+            if (i // batch_size + 1) % 10 == 0:
+                time.sleep(0.1)
 
         # Sort by count
         sorted_senders = sorted(
