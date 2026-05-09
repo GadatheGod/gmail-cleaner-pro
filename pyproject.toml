@@ -1,0 +1,74 @@
+[project]
+name = "gmail-cleaner-pro"
+version = "2.0.0"
+description = "A powerful, privacy-focused Gmail cleanup tool with dark mode, email preview, smart filters, and scheduled rules"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.9"
+authors = [
+    { name = "GadatheGod" }
+]
+keywords = ["gmail", "email", "unsubscribe", "cleanup", "privacy", "dark-mode", "bulk-delete"]
+
+dependencies = [
+    "google-auth>=2.23.0",
+    "google-auth-oauthlib>=1.1.0",
+    "google-api-python-client>=2.100.0",
+    "fastapi>=0.122.0",
+    "uvicorn>=0.38.0",
+    "pydantic-settings>=2.11.0",
+    "jinja2>=3.1.6",
+]
+
+[project.urls]
+Homepage = "https://github.com/GadatheGod/gmail-cleaner-pro"
+Repository = "https://github.com/GadatheGod/gmail-cleaner-pro"
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=4.1.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+asyncio_mode = "auto"
+
+[tool.coverage.run]
+source = ["app"]
+omit = ["tests/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+]
+
+[tool.pyright]
+typeCheckingMode = "basic"
+reportMissingTypeStubs = false
+reportUnknownMemberType = false
+reportUnknownArgumentType = false
+reportUnknownVariableType = false
+reportOptionalMemberAccess = false
+reportAttributeAccessIssue = false
+ignoreUnknownImports = true
+
+[tool.ruff]
+# Ignore unused imports (F401) in __init__.py files
+# These imports are used for re-exports, so they're not actually unused
+[tool.ruff.lint]
+per-file-ignores = { "**/__init__.py" = ["F401"] }
